@@ -1,28 +1,28 @@
 import mongoose from 'mongoose';
 const Data = new mongoose.Schema({
-    vibration:{
+    sensor1:{
         type:String
     },
-    acoustics: {
+    sensor2: {
         type:String
     },
-    temperature:  {
+    sensor3:  {
         type:String
     },
-    humidity:  {
+    sensor4:  {
         type:String
     },
-    rpm:  {
+    sensor5:  {
         type:String
     },
-    magnetic_flex: {
+    other: {
         type:String
     },
     timestamp: {
         type:String
     },
 })
-export default mongoose.model("insertdata", Data);
+export default mongoose.model("skf_insertdata", Data);
 
 
 

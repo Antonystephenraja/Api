@@ -7,7 +7,7 @@ const app = express();
 
 const connect = async () =>{
     try {
-        await mongoose.connect('mongodb://127.0.0.1:27017/nanoprecise');
+        await mongoose.connect('mongodb://127.0.0.1:27017/Database');
         console.log('Mongodb Connected..');
     } catch (error) {
         throw error;
@@ -22,6 +22,13 @@ mongoose.connection.on('disconnected',()=>{
 
 //middlewares
 //for json
+
+//Enable CORs for all routes
+// const corsOptions = {
+//     origin: 'http://13.126.100.44:3000',
+//     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+// };
+
 app.use(express.json());
 //Enable CORs for all routes
 app.use(cors());

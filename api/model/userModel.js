@@ -1,17 +1,12 @@
-import mongoose from "mongoose";
-const {Schema} = mongoose;
+import mongoose from  'mongoose';
 
-const User = new mongoose.Schema(
+const EmployeeSchema = new mongoose.Schema(
     {
-        email: {
-            type: String,
-            required: true, 
-            unique: true},
-        password: {
-            type: String,
-            required: true},
-    },
-    {collection: 'user-data'}
+        Project: String,
+        Email: String,
+        Password: String,
+    }
 )
 
-export default mongoose.model('UserData',User);
+const EmployeeModel = mongoose.model('employees_Login', EmployeeSchema)
+export default EmployeeModel;
