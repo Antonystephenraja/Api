@@ -5,6 +5,8 @@ const EmployeeSchema = new mongoose.Schema(
         Project: String,
         Email: String,
         Password: String,
+        Parameters: String,
+        ParameterValues: Object
     }
 )
 
