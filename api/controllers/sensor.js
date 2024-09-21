@@ -80,7 +80,6 @@ export const login = (req,res) =>
                         {
                             role = 'client';
                         }
-                
                         res.json({token : token, role: role, redirectUrl: redirectUrl}); 
                     }
                     else
@@ -206,18 +205,35 @@ export const insertProjectData = (req, res) => {
 
 //BPCL INSERT LINK
 export const BPCL = async(req,res)=>{
-    const requiredParams = Array.from({ length: 50 }, (_, i) => `ac${i + 1}`);
+    const requiredParams = Array.from({ length: 1}, (_, i) => `ac${i + 1}`);
 
     const missingParams = requiredParams.filter(param => !req.query[param]);
     if (missingParams.length > 0) {
         return res.status(400).json({ error: "Missing required parameters: " + missingParams.join(',') });
     }
     try{
+    
         const acValues = [];
         for (const param of requiredParams) {
             acValues.push(req.query[param]);
         }
-        console.log('All AC values:', acValues);
+        const date = new Date();
+        const options = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata',
+        };
+        const formattedTimestamp = date.toLocaleString('en-US', options); 
+        const [dd_mm_yy,time] = formattedTimestamp.split(',')
+        const[dd,mm,yy]=dd_mm_yy.split('/')
+        const fulldate = dd+'-'+mm+'-'+yy+','+time
+        acValues.push(fulldate);
+       
 
         await bpclModel.create({ acValues });
         res.status(200).json({ message: "[success]" });
@@ -225,6 +241,8 @@ export const BPCL = async(req,res)=>{
         res.status(500).json({ error: err.message });
     }
 }
+
+
 
 //BPCL READ LINK
 export const BPCL_READ = async (req, res) => {
@@ -236,7 +254,7 @@ export const BPCL_READ = async (req, res) => {
             // Flatten the array of arrays to a single array
             const acValues = alldata.reduce((acc, curr) => acc.concat(curr.acValues), []);
 
-            res.json({ success: true, data: acValues});
+            res.json({ success: true, data: alldata});
         } else {
             res.json({ success: false, message: "Data not found" });
         }
@@ -267,7 +285,7 @@ export const BPCL_TOF_INSERT = async (req,res)=>{
         const formattedTimestamp = date.toLocaleString('en-US', options);
 
 
-        const responseData = [`#000002,100000,000100,000002,000007,%008000,014000,018000,024000,039000,045000,048000,056000,059000,066000,070000,077000,080000,087000%,000150,000100,000001#,24`]
+        const responseData = ["$000001,200000,000050,000002,180000,280000,000150,000100,000001,000001,000000$"]
         const Tofdata = {
             tof1:tof1,
             tof2:tof2,
@@ -545,7 +563,9 @@ export const levelchartdata = async (req, res) => {
 
     const mailOptions = {
         from: process.env.WEBSITE_EMAIL,
+
         to: process.env.ADMIN_EMAIL,
+        cc:process.env.CCMail,
         subject: `${name} contacted you through XYMA Website`,
         text: `Name: ${name}\nEmail: ${email}\nJob: ${job}\nCompany: ${company}\nSolution: ${solution}\nDetails: ${details}`,
     };
@@ -573,7 +593,7 @@ export const levelchartdata = async (req, res) => {
           },
         });
 
-        console.log(auth)
+    
       
         const { email } = req.body;
         const mailOptions = {
@@ -627,6 +647,7 @@ export const adminSignup = (req,res) =>
     // admin login
 export const adminLogin = (req,res) =>
     {
+        console.log("yes")
       const {Username, Password} = req.body;
       AdminInfoModel.findOne({Username: Username})
       .then(user => {

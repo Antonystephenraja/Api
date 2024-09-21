@@ -22,17 +22,15 @@ mongoose.connection.on('disconnected',()=>{
     console.log('Mongodb disconnected...');
 });
 
-//middlewares
-//for json
-
-//Enable CORs for all routes
-// const corsOptions = {
-//     origin: 'http://13.126.100.44:3000',
-//     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-// };
-
+const corsOptions = {
+    // origin: 'https://xyma.co.in',
+    // optionsSuccessStatus: 200
+  };
+  
 app.use(express.json());
 app.use(cors());
+
+
 
 app.use('/sensor',sensorRoute);
 
