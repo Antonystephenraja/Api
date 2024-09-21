@@ -182,8 +182,6 @@ export const insertProjectData = (req, res) => {
         dynamicSchema[param] = String;
     });
 
-
-    console.log(dynamicSchema)
     projectDataSchema.add(dynamicSchema);
 
     const projectDataModel = mongoose.models[projectName] || mongoose.model(projectName, projectDataSchema, projectName);
@@ -243,23 +241,56 @@ export const BPCL = async(req,res)=>{
 }
 
 
-
+let con_date ="09-21-2024, 01:02:59 PM";
 //BPCL READ LINK
 export const BPCL_READ = async (req, res) => {
-    try {
-        const alldata = await bpclModel.find().sort();
-
-
-        if (alldata.length > 0) {
-            // Flatten the array of arrays to a single array
-            const acValues = alldata.reduce((acc, curr) => acc.concat(curr.acValues), []);
-
-            res.json({ success: true, data: alldata});
-        } else {
-            res.json({ success: false, message: "Data not found" });
+    const{fromdate}=req.query;
+    const date = new Date();
+        const options = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata',
+        };
+        const formattedTimestamp = date.toLocaleString('en-US', options); 
+        const [dd_mm_yy,time] = formattedTimestamp.split(',')
+        const[dd,mm,yy]=dd_mm_yy.split('/')
+        const fulldate = dd+'-'+mm+'-'+yy+','+time
+        if(!fromdate){
+            try {
+                const filteredData = await bpclModel.find({
+                    "acValues.1": { 
+                        $gte: con_date,  
+                        $lte: fulldate 
+                    }
+                }).sort();
+                if (filteredData.length > 0) {
+                    let allAcvalues =[];
+                    filteredData.forEach(doc =>{
+                        const values =doc.acValues[0].split(',').map(Number);
+                        allAcvalues =allAcvalues.concat(values);
+                    })
+                    res.json({ success: true, data: allAcvalues});
+                } else {
+                    res.json({ success: false, message: `Data not found${con_date}` });
+                }
+            } catch (err) {
+                res.status(500).json({ error: err.message });
+            }
+        // return res.status(400).json({error:"Missing required date range"})
+    }else if(!fulldate){
+        return res.status(400).json({error:"server can't get date"})
+    } else{
+        try {
+            con_date = fromdate;
+            res.status(200).json({success:true,message:"Data successfuly saved"})
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
     }
 };
 
