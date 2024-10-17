@@ -232,44 +232,10 @@ export const BPCL = async(req,res)=>{
         const[dd,mm,yy]=dd_mm_yy.split('/')
         const fulldate = dd+'-'+mm+'-'+yy+','+time
         acValues.push(fulldate);
-
-        let DynamicModel;
-        if (mongoose.models[acValues[0]]) {
-            DynamicModel = mongoose.models[acValues[0]]; // Use the existing model
-        } else {
-            const dynamicSchema = new mongoose.Schema({ data: [String] });
-            DynamicModel = mongoose.model(acValues[0], dynamicSchema, acValues[0]);
-        }
-
-        const instance = new DynamicModel({ data: acValues});
-        await instance.save();
-        res.status(200).json({ message: `Data stored in collection ${acValues[0]} successfully!` });
-
-
-        // const acValues = [];
-        // for (const param of requiredParams) {
-        //     acValues.push(req.query[param]);
-        // }
-        // const date = new Date();
-        // const options = {
-        //   year: 'numeric',
-        //   month: '2-digit',
-        //   day: '2-digit',
-        //   hour: '2-digit',
-        //   minute: '2-digit',
-        //   second: '2-digit',
-        //   hour12: true,
-        //   timeZone: 'Asia/Kolkata',
-        // };
-        // const formattedTimestamp = date.toLocaleString('en-US', options); 
-        // const [dd_mm_yy,time] = formattedTimestamp.split(',')
-        // const[dd,mm,yy]=dd_mm_yy.split('/')
-        // const fulldate = dd+'-'+mm+'-'+yy+','+time
-        // acValues.push(fulldate);
        
 
-        // await bpclModel.create({ acValues });
-        // res.status(200).json({ message: "[success]" });
+        await bpclModel.create({ acValues });
+        res.status(200).json({ message: "[success]" });
     } catch(err){
         res.status(500).json({ error: err.message });
     }
@@ -904,7 +870,6 @@ export const addPosition = (req,res) => {
   
   //add application form in careers to db
   export const uploadApplicationForm = (req,res) => {
-  
     const {Name, Email, Phone, LinkedIn, ExpectedSalary, PrevJobCompany, PrevJobTitle, SelfIntro, WhyIntrested, YourExpectations, OurExpectations, Relocate, StartDate, ApplyingForDepartment, ApplyingForPosition} = req.body;
     const { buffer } = req.file
     ApplicationFormModel.create({
