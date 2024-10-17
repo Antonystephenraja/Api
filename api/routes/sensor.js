@@ -5,7 +5,7 @@ import { login, signup,InsertData,readLimitMain,read,readSensorGraph,
     displayProjectData, levelinsert,levelchartdata,displayProjectDataLimit,levelexceldata,DisplayAllData
     ,contacts,subscription,Check,adminSignup,adminLogin,validateToken,addPosition,getPosition,deletePosition,updatePosition,uploadApplicationForm,getApplicationForm,
 
-    displayProjectReportData
+    displayProjectReportData,ASCAN_PROJECT_ADD,ASCAN_PROJECT_LIST,ASCAN_PROJECT_DELETE,SETTINGS_PAGE,insertHindalcoData
 } from "../controllers/sensor.js";
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -37,7 +37,7 @@ router.get('/getapplicationform',getApplicationForm);
 
 
 //BPCL
-router.get('/XYMA_BPCL',BPCL)
+router.get('/XYMA_BPCL',BPCL);
 router.get('/BPCL_READ',BPCL_READ)
 router.get('/BPCL_TOF_INSERT',BPCL_TOF_INSERT)
 router.post('/BPCL_ASCAN_CLEAR',BPCL_ASCAN_CLEAR)
@@ -46,12 +46,21 @@ router.post('/displayProjectDataLimit',displayProjectDataLimit);
 router.get('/displayProjectData',displayProjectData);
 router.get('/DisplayProjectReport',displayProjectReportData)
 router.get('/project_all_data',DisplayAllData);
+router.post('/ASCAN_PROJECT_ADD',ASCAN_PROJECT_ADD);
+router.get('/ASCAN_PROJECT_LIST',ASCAN_PROJECT_LIST)
+router.post('/ASCAN_PROJECT_DELETE',ASCAN_PROJECT_DELETE);
+router.post('/SETTINGS_PAGE',SETTINGS_PAGE);
+
 
 //level mobile application
 router.get('/levelinsert', levelinsert)
 router.get('/leveldata/:id', leveldata)
 router.get('/levelchartdata/:sensorId/:dataField', levelchartdata)
 router.get('/levelexceldata', levelexceldata)
+
+
+//Backup Datas
+router.get("/insertHindalcoData", insertHindalcoData);
 
 
 export default router;

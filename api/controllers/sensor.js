@@ -10,6 +10,9 @@ import nodemailer from "nodemailer";
 import AdminInfoModel from '../model/AdminInfoSchema.js';
 import PositionModel from '../model/PositionSchema.js';
 import ApplicationFormModel from '../model/ApplicationFormSchema.js';
+import projectdata from '../model/Project_Insert.js';
+import settings_data from '../model/settingsShema.js';
+import hindalcoModel from '../model/hindalcoModel.js';
 
 //Register
 export const signup =async (req,res) =>
@@ -174,8 +177,6 @@ export const insertProjectData = (req, res) => {
     const projectName = req.query.projectName;
     const parameterValues = Object.keys(req.query).filter(key => key !== 'projectName');
 
-
-
     //creates dynamic schema
     const dynamicSchema = {};
     parameterValues.forEach(param => {
@@ -203,18 +204,18 @@ export const insertProjectData = (req, res) => {
 
 //BPCL INSERT LINK
 export const BPCL = async(req,res)=>{
-    const requiredParams = Array.from({ length: 1}, (_, i) => `ac${i + 1}`);
-
+    const requiredParams = Array.from({ length: 2}, (_, i) => `ac${i + 1}`);
     const missingParams = requiredParams.filter(param => !req.query[param]);
     if (missingParams.length > 0) {
         return res.status(400).json({ error: "Missing required parameters: " + missingParams.join(',') });
     }
-    try{
-    
+    try {
+
         const acValues = [];
         for (const param of requiredParams) {
             acValues.push(req.query[param]);
         }
+        
         const date = new Date();
         const options = {
           year: 'numeric',
@@ -231,10 +232,44 @@ export const BPCL = async(req,res)=>{
         const[dd,mm,yy]=dd_mm_yy.split('/')
         const fulldate = dd+'-'+mm+'-'+yy+','+time
         acValues.push(fulldate);
+
+        let DynamicModel;
+        if (mongoose.models[acValues[0]]) {
+            DynamicModel = mongoose.models[acValues[0]]; // Use the existing model
+        } else {
+            const dynamicSchema = new mongoose.Schema({ data: [String] });
+            DynamicModel = mongoose.model(acValues[0], dynamicSchema, acValues[0]);
+        }
+
+        const instance = new DynamicModel({ data: acValues});
+        await instance.save();
+        res.status(200).json({ message: `Data stored in collection ${acValues[0]} successfully!` });
+
+
+        // const acValues = [];
+        // for (const param of requiredParams) {
+        //     acValues.push(req.query[param]);
+        // }
+        // const date = new Date();
+        // const options = {
+        //   year: 'numeric',
+        //   month: '2-digit',
+        //   day: '2-digit',
+        //   hour: '2-digit',
+        //   minute: '2-digit',
+        //   second: '2-digit',
+        //   hour12: true,
+        //   timeZone: 'Asia/Kolkata',
+        // };
+        // const formattedTimestamp = date.toLocaleString('en-US', options); 
+        // const [dd_mm_yy,time] = formattedTimestamp.split(',')
+        // const[dd,mm,yy]=dd_mm_yy.split('/')
+        // const fulldate = dd+'-'+mm+'-'+yy+','+time
+        // acValues.push(fulldate);
        
 
-        await bpclModel.create({ acValues });
-        res.status(200).json({ message: "[success]" });
+        // await bpclModel.create({ acValues });
+        // res.status(200).json({ message: "[success]" });
     } catch(err){
         res.status(500).json({ error: err.message });
     }
@@ -242,56 +277,66 @@ export const BPCL = async(req,res)=>{
 
 
 let con_date ="09-21-2024, 01:02:59 PM";
+let project_name = "None";
 //BPCL READ LINK
 export const BPCL_READ = async (req, res) => {
-    const{fromdate}=req.query;
+    const{fromdate,project}=req.query;
     const date = new Date();
-        const options = {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-          timeZone: 'Asia/Kolkata',
-        };
-        const formattedTimestamp = date.toLocaleString('en-US', options); 
-        const [dd_mm_yy,time] = formattedTimestamp.split(',')
-        const[dd,mm,yy]=dd_mm_yy.split('/')
-        const fulldate = dd+'-'+mm+'-'+yy+','+time
-        if(!fromdate){
-            try {
-                const filteredData = await bpclModel.find({
-                    "acValues.1": { 
-                        $gte: con_date,  
-                        $lte: fulldate 
-                    }
-                }).sort();
-                if (filteredData.length > 0) {
-                    let allAcvalues =[];
-                    filteredData.forEach(doc =>{
-                        const values =doc.acValues[0].split(',').map(Number);
-                        allAcvalues =allAcvalues.concat(values);
-                    })
-                    res.json({ success: true, data: allAcvalues});
-                } else {
-                    res.json({ success: false, message: `Data not found${con_date}` });
-                }
-            } catch (err) {
-                res.status(500).json({ error: err.message });
-            }
-        // return res.status(400).json({error:"Missing required date range"})
-    }else if(!fulldate){
-        return res.status(400).json({error:"server can't get date"})
-    } else{
-        try {
-            con_date = fromdate;
-            res.status(200).json({success:true,message:"Data successfuly saved"})
-        } catch (err) {
-            res.status(500).json({ error: err.message });
-        }
+    const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+    };
+
+    const formattedTimestamp = date.toLocaleString('en-US', options); 
+    const [dd_mm_yy,time] = formattedTimestamp.split(',');
+    const[dd,mm,yy]=dd_mm_yy.split('/');
+    const fulldate = dd+'-'+mm+'-'+yy+','+time;
+    if(fromdate && project){
+      console.log("with fromdate  project name")
+      res.status(200).json({success:true,message:"Data successfuly saved"})
+  }else{
+      console.log("without fromdate and project name")
     }
+    // if(!fromdate){
+    //     try {            
+    //         const filteredData = await bpclModel.find({
+    //             "acValues.1": { 
+    //                 $gte: con_date,  
+    //                 $lte: fulldate 
+    //             }
+    //         }).sort();
+    //         if (filteredData.length > 0) {
+    //             let allAcvalues =[];
+    //             filteredData.forEach(doc =>{
+    //                 const values =doc.acValues[0].split(',').map(Number);
+    //                 allAcvalues =allAcvalues.concat(values);
+    //             })
+    //             res.json({ success: true, data: allAcvalues});
+    //         } else {
+    //             res.json({ success: false, message: `Data not found${con_date}` });
+    //         }
+    //     }catch (err) {
+    //         res.status(500).json({ error: err.message });
+    //     } 
+    // }
+    // else if(!fulldate){
+    //     return res.status(400).json({error:"server can't get date"})
+    // }else{
+    //     try {
+    //         con_date = fromdate;
+    //         console.log("project before name = ",project)
+    //         project_name = project;
+    //         res.status(200).json({success:true,message:"Data successfuly saved"})
+    //     } catch (err) {
+    //         res.status(500).json({ error: err.message });
+    //     }
+    // }
 };
 
 
@@ -301,6 +346,10 @@ export const BPCL_TOF_INSERT = async (req,res)=>{
         return res.status(400).json({ error: "Missing required parameters" });
     }
     try{
+        const data = await settings_data.find().sort().limit()
+        // console.log(data)
+
+        // we need to use after sometime
 
         const date = new Date();
         const options = {
@@ -314,8 +363,6 @@ export const BPCL_TOF_INSERT = async (req,res)=>{
           timeZone: 'Asia/Kolkata',
         };
         const formattedTimestamp = date.toLocaleString('en-US', options);
-
-
         const responseData = ["$000001,200000,000050,000002,180000,280000,000150,000100,000001,000001,000000$"]
         const Tofdata = {
             tof1:tof1,
@@ -327,7 +374,6 @@ export const BPCL_TOF_INSERT = async (req,res)=>{
         };
         await bpcl_tof_insert.create(Tofdata);
         res.status(200).json(responseData);
-
     }catch(err){
         res.status(500).json({error:err.message})
     }
@@ -344,7 +390,101 @@ export const BPCL_ASCAN_CLEAR = async(req,res) =>{
 }
 
 
+//BPCL ADMINPAGE ASCAN PROJECT LIST API
+export const ASCAN_PROJECT_ADD = async (req,res)=>{
+    const{projectName}=req.body;
+    try {
+        await projectdata.findOneAndUpdate(
+          {},
+          { $push: { project: projectName } }, // Push new projectName into the project array
+          { upsert: true, new: true } // Create the document if it doesn't exist
+        );
+        res.status(200).json({ message: "Project successfully added to the array" });
+    }catch(error){
+        console.error(error);
+        res.status(500).json({message:"Failed to store the data"})
+    }
+}
 
+//Parameter settings add
+
+export const SETTINGS_PAGE = async(req,res)=>{
+    const{Project,Pulsewidth,Amplitude,Gain,Mode,Average,Threshold,Nop,Start,Stop}=req.body;
+    try{
+        
+        const existingSettings = await settings_data.findOne({ Project });
+        ;
+        if (existingSettings) {
+            const updatedSettings = await settings_data.findOneAndUpdate(
+                { Project },
+                {
+                    Pulsewidth,
+                    Amplitude,
+                    Gain,
+                    Mode,
+                    Average,
+                    Threshold,
+                    Nop,
+                    Start,
+                    Stop
+                },
+                { new: true } 
+            );
+            res.status(200).json({ message: "Data successfully updated", data: updatedSettings });
+        } else {
+            const newSettings = await settings_data.create({
+                Project,
+                Pulsewidth,
+                Amplitude,
+                Gain,
+                Mode,
+                Average,
+                Threshold,
+                Nop,
+                Start,
+                Stop
+            });
+
+            res.status(200).json({ message: "Data successfully stored", data: newSettings });
+        }
+        }catch(error){
+        console.error(error);
+        res.status(500).json({message:"Failed to store the data"})
+    }
+}
+
+export const ASCAN_PROJECT_LIST = async(req,res)=>{
+    try{
+        const response_data = await projectdata.find().sort();
+        if(response_data){
+            res.json({success:true,data:response_data})
+        }
+    }catch(error){
+        res.status(500).json({message:"Failed to retrive data"})
+    }
+}
+
+export const ASCAN_PROJECT_DELETE = async (req, res) => {
+    const { projectName } = req.body;
+  
+    try {
+      // Use $pull to remove projectName from the project array
+      const response_data = await projectdata.updateMany(
+        { project: projectName }, // Find documents that contain projectName
+        { $pull: { project: projectName } } // Remove projectName from project array
+      );
+  
+      if (response_data.modifiedCount > 0) {
+        res.json({ success: true, message: `${projectName} has been deleted from the project array` });
+      } else {
+        res.json({ success: false, message: `${projectName} not found in any project arrays` });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to delete the project name from the array" });
+    }
+  };
+  
 
 
 
@@ -384,6 +524,8 @@ export const displayProjectData = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
+
 
 
 export const displayProjectReportData = async (req, res) => {
@@ -801,4 +943,46 @@ export const addPosition = (req,res) => {
       .then((applicationForms) => res.json(applicationForms))
       .catch((err) => res.status(500).json(err));
   }
+
+
+  //Hindalco Insert Link
+  export const insertHindalcoData = async (req,res) => {
+    const {deviceName, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, deviceTemperature, deviceSignal, deviceBattery, time} = req.query;
+  
+    if ( !deviceName || !s1 || !s2 || !s3 || !s4 || !s5 || !s6 || !s7 || !s8 || !s9 || !s10 || !s11 || !s12 || !s13|| !s14 || !s15 || !deviceTemperature || !deviceSignal || !deviceBattery  || !time) {
+      return res.status(400).json({ error: 'Missing required parameters'});
+    }
+  
+    try {
+      const hindalcoData = {
+        DeviceName: deviceName,
+        S1: s1,
+        S2: s2,
+        S3: s3,
+        S4: s4,
+        S5: s5,
+        S6: s6,
+        S7: s7,
+        S8: s8,
+        S9: s9,
+        S10: s10,
+        S11: s11,
+        S12: s12,
+        S13: s13,
+        S14: s14,
+        S15: s15,
+        DeviceTemperature: deviceTemperature,
+        DeviceSignal: deviceSignal,
+        DeviceBattery: deviceBattery,
+        Time: time,
+      };
+      await hindalcoModel.create(hindalcoData);
+      // await hindalcoModel.create(hindalcoData);
+      res.status(200).json({ message: 'Data inserted successfully' });
+    } catch (error) {
+      res.status(500).json({ error: error.message })
+    };
+  };
+
+
   
