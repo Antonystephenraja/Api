@@ -13,6 +13,7 @@ import ApplicationFormModel from "../model/ApplicationFormSchema.js";
 import projectdata from "../model/Project_Insert.js";
 import settings_data from "../model/settingsShema.js";
 import hindalcoModel from "../model/hindalcoModel.js";
+import xymaClientsModel from "../model/xymaClientsModel.js";
 
 //Register
 // mac commit - dec 5
@@ -195,11 +196,9 @@ export const BPCL = async (req, res) => {
   const requiredParams = Array.from({ length: 2 }, (_, i) => `ac${i + 1}`);
   const missingParams = requiredParams.filter((param) => !req.query[param]);
   if (missingParams.length > 0) {
-    return res
-      .status(400)
-      .json({
-        error: "Missing required parameters: " + missingParams.join(","),
-      });
+    return res.status(400).json({
+      error: "Missing required parameters: " + missingParams.join(","),
+    });
   }
   try {
     const acValues = [];
@@ -671,11 +670,9 @@ export const levelchartdata = async (req, res) => {
       if (filteredData.length > 0) {
         res.status(200).json(filteredData);
       } else {
-        res
-          .status(404)
-          .json({
-            message: `No data found for sensor ID ${sensorId} with the requested field: ${dataField}`,
-          });
+        res.status(404).json({
+          message: `No data found for sensor ID ${sensorId} with the requested field: ${dataField}`,
+        });
       }
     }
   } catch (error) {
@@ -1056,5 +1053,50 @@ export const insertHindalcoData = async (req, res) => {
     res.status(200).json({ message: "Data inserted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+// xyma clients api
+
+export const addXymaClients = async (req, res) => {
+  try {
+    const { clientName, clientUrl } = req.body;
+
+    if (!clientName || !clientUrl) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const clientData = {
+      ClientName: clientName,
+      ClientUrl: clientUrl,
+    };
+
+    await xymaClientsModel.create(clientData);
+
+    res.status(200).send("Client name added succesfully!");
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+export const getXymaClients = async (req, res) => {
+  try {
+    const clients = await xymaClientsModel.find().sort({ _id: -1 });
+
+    if (clients.length > 0) {
+      res
+        .status(200)
+        .json({ message: "Clients retrieved successfully", data: clients });
+    } else if (!clients.length) {
+      res
+        .status(200)
+        .json({ message: "Clients retrieved successfully", data: clients });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
   }
 };
