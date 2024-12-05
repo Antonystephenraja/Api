@@ -912,34 +912,95 @@ export const addPosition = (req,res) => {
 
   //Hindalco Insert Link
   export const insertHindalcoData = async (req,res) => {
-    const {deviceName, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, deviceTemperature, deviceSignal, deviceBattery, time} = req.query;
+    const {
+      deviceName,
+      s1,
+      s2,
+      s3,
+      s4,
+      s5,
+      s6,
+      s7,
+      s8,
+      s9,
+      s10,
+      s11,
+      s12,
+      s13,
+      s14,
+      s15,
+      deviceTemperature,
+      deviceSignal,
+      deviceBattery,
+    } = req.query;
   
-    if ( !deviceName || !s1 || !s2 || !s3 || !s4 || !s5 || !s6 || !s7 || !s8 || !s9 || !s10 || !s11 || !s12 || !s13|| !s14 || !s15 || !deviceTemperature || !deviceSignal || !deviceBattery  || !time) {
-      return res.status(400).json({ error: 'Missing required parameters'});
+    if (
+      !deviceName ||
+      !s1 ||
+      !s2 ||
+      !s3 ||
+      !s4 ||
+      !s5 ||
+      !s6 ||
+      !s7 ||
+      !s8 ||
+      !s9 ||
+      !s10 ||
+      !s11 ||
+      !s12 ||
+      !s13 ||
+      !s14 ||
+      !s15 ||
+      !deviceTemperature ||
+      !deviceSignal ||
+      !deviceBattery
+    ) {
+      return res.status(400).json({ error: "Missing required parameters" });
     }
+  
+    const dateTime = new Date();
+    const kolkataTime = dateTime.toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+      hour12: false,
+    });
+  
+    const [datePart, timePart] = kolkataTime.split(",");
+    const trimmedTimePart = timePart.trim();
+    const [month, date, year] = datePart.split("/");
+    const [hour, minute, second] = trimmedTimePart.split(":");
+  
+    // const [date, zone] = time.split(" ");
+    // const [datePart, timePart] = date.split(",");
+    // const [year, month, day] = datePart.split("/");
+    // const [hour, minute, second] = timePart.split(":");
+  
+    // const fullYear = `20${year}`;
+  
+    const timestamp = `${year}-${month}-${date},${hour}:${minute}:${second}`;
+    // console.log('timestamp', timestamp);
   
     try {
       const hindalcoData = {
         DeviceName: deviceName,
-        S1: s1,
-        S2: s2,
-        S3: s3,
-        S4: s4,
-        S5: s5,
-        S6: s6,
-        S7: s7,
-        S8: s8,
-        S9: s9,
-        S10: s10,
-        S11: s11,
-        S12: s12,
-        S13: s13,
-        S14: s14,
-        S15: s15,
+        T1: s1,
+        T2: s2,
+        T3: s3,
+        T4: s4,
+        T5: s5,
+        T6: s6,
+        T7: s7,
+        T8: s8,
+        T9: s9,
+        T10: s10,
+        T11: s11,
+        T12: s12,
+        T13: s13,
+        T14: s14,
+        T15: s15,
         DeviceTemperature: deviceTemperature,
         DeviceSignal: deviceSignal,
         DeviceBattery: deviceBattery,
-        Time: time,
+        Time: timestamp,
       };
       await hindalcoModel.create(hindalcoData);
       // await hindalcoModel.create(hindalcoData);
