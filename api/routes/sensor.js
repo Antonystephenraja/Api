@@ -97,7 +97,7 @@ router.get("/levelexceldata", levelexceldata);
 router.get("/insertHindalcoData", insertHindalcoData);
 
 //Xyma clients
-router.post("/addXymaClients", addXymaClients);
+router.post("/addXymaClients", upload.single("clientLogo"), addXymaClients);
 router.get("/getXymaClients", getXymaClients);
 
 export default router;

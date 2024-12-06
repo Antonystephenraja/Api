@@ -1062,13 +1062,15 @@ export const addXymaClients = async (req, res) => {
   try {
     const { clientName, clientUrl } = req.body;
 
-    if (!clientName || !clientUrl) {
+    if (!clientName || !clientUrl || !req.file) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
     const clientData = {
       ClientName: clientName,
       ClientUrl: clientUrl,
+      ClientLogo: req.file.buffer,
+      LogoContentType: req.file.mimetype,
     };
 
     await xymaClientsModel.create(clientData);
@@ -1086,9 +1088,18 @@ export const getXymaClients = async (req, res) => {
     const clients = await xymaClientsModel.find().sort({ _id: -1 });
 
     if (clients.length > 0) {
-      res
-        .status(200)
-        .json({ message: "Clients retrieved successfully", data: clients });
+      const formattedClients = clients.map((client) => ({
+        id: client._id,
+        ClientName: client.ClientName,
+        ClientUrl: client.ClientUrl,
+        ClientLogo: client.ClientLogo.toString("base64"),
+        LogoContentType: client.LogoContentType,
+      }));
+
+      res.status(200).json({
+        message: "Clients retrieved successfully",
+        data: formattedClients,
+      });
     } else if (!clients.length) {
       res
         .status(200)
