@@ -14,6 +14,7 @@ import projectdata from "../model/Project_Insert.js";
 import settings_data from "../model/settingsShema.js";
 import hindalcoModel from "../model/hindalcoModel.js";
 import xymaClientsModel from "../model/xymaClientsModel.js";
+import passwordModel from "../model/xymaClientsPasswordModel.js";
 
 //Register
 // mac commit - dec 5
@@ -1058,6 +1059,85 @@ export const insertHindalcoData = async (req, res) => {
 
 // xyma clients api
 
+// http://localhost:4000/sensor/xymaClientsSignup
+// { "Username": "enterUsername", "Password": "enterPassword" }
+
+export const xymaClientsSignup = async (req, res) => {
+  try {
+    const { Username, Password } = req.body;
+
+    if (!Username || !Password) {
+      return res.status(400).json({
+        message: "Username and Password is required.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(Password, 10);
+
+    await passwordModel.create({ Username, Password: hashedPassword });
+
+    res.status(200).json({
+      message: "Credentials set successfully.",
+    });
+  } catch (error) {
+    console.error("Error during signup:", error);
+
+    res.status(500).json({
+      message: "An error occurred during signup.",
+      error,
+    });
+  }
+};
+
+export const verifyXymaClientsPassword = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await passwordModel.findOne({ Username: username });
+
+    if (!user) {
+      return res.status(200).json({ success: false });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.Password);
+
+    if (isPasswordCorrect) {
+      const redirectUrl = "/modify";
+      const token = jwt.sign({ username: user.Username }, "jwt-key-XyMa@2k25", {
+        expiresIn: "1h",
+      });
+      return res.status(200).json({ token, redirectUrl, success: true });
+    } else {
+      return res.status(200).json({ success: false });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+export const xymaClientsValidateToken = (req, res) => {
+  try {
+    const token = req.headers["authorization"];
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ valid: false, message: "Token not provided." });
+    }
+
+    const user = jwt.verify(token, "jwt-key-XyMa@2k25");
+    res.status(200).json({ valid: true, user });
+  } catch (err) {
+    console.error("Token validation error:", err);
+    const status = err.name === "JsonWebTokenError" ? 403 : 500;
+    res
+      .status(status)
+      .json({ valid: false, message: "Invalid or expired token." });
+  }
+};
+
 export const addXymaClients = async (req, res) => {
   try {
     const { clientName, clientUrl } = req.body;
@@ -1105,6 +1185,26 @@ export const getXymaClients = async (req, res) => {
         .status(200)
         .json({ message: "Clients retrieved successfully", data: clients });
     }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+export const deleteXymaClients = async (req, res) => {
+  try {
+    const { clientId } = req.body;
+
+    console.log("client id", clientId);
+
+    const clientDeleted = await xymaClientsModel.findByIdAndDelete(clientId);
+
+    if (!clientDeleted) {
+      return res.status(404).json({ message: "Client not found." });
+    }
+
+    res.status(200).json({ message: "Client deleted successfully." });
   } catch (error) {
     res
       .status(500)

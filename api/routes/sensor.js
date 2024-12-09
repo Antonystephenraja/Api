@@ -40,6 +40,10 @@ import {
   insertHindalcoData,
   addXymaClients,
   getXymaClients,
+  deleteXymaClients,
+  xymaClientsSignup,
+  verifyXymaClientsPassword,
+  xymaClientsValidateToken,
 } from "../controllers/sensor.js";
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -97,7 +101,11 @@ router.get("/levelexceldata", levelexceldata);
 router.get("/insertHindalcoData", insertHindalcoData);
 
 //Xyma clients
+router.post("/xymaClientsSignup", xymaClientsSignup);
 router.post("/addXymaClients", upload.single("clientLogo"), addXymaClients);
 router.get("/getXymaClients", getXymaClients);
+router.post("/deleteXymaClients", deleteXymaClients);
+router.post("/verifyXymaClientsPassword", verifyXymaClientsPassword);
+router.post("/xymaClientsValidateToken", xymaClientsValidateToken);
 
 export default router;
