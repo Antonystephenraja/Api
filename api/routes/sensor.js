@@ -44,6 +44,9 @@ import {
   xymaClientsSignup,
   verifyXymaClientsPassword,
   xymaClientsValidateToken,
+  addXymaCredentials,
+  getXymaCredentials,
+  deleteXymaCredentials,
 } from "../controllers/sensor.js";
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -107,5 +110,8 @@ router.get("/getXymaClients", getXymaClients);
 router.post("/deleteXymaClients", deleteXymaClients);
 router.post("/verifyXymaClientsPassword", verifyXymaClientsPassword);
 router.post("/xymaClientsValidateToken", xymaClientsValidateToken);
+router.post("/addXymaCredentials", addXymaCredentials);
+router.get("/getXymaCredentials", getXymaCredentials);
+router.post("/deleteXymaCredentials", deleteXymaCredentials);
 
 export default router;

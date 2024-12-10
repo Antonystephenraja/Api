@@ -15,6 +15,8 @@ import settings_data from "../model/settingsShema.js";
 import hindalcoModel from "../model/hindalcoModel.js";
 import xymaClientsModel from "../model/xymaClientsModel.js";
 import passwordModel from "../model/xymaClientsPasswordModel.js";
+import credentialsModel from "../model/xymaClientsCredentialModel.js";
+import crypto from "crypto";
 
 //Register
 // mac commit - dec 5
@@ -1130,7 +1132,7 @@ export const xymaClientsValidateToken = (req, res) => {
     const user = jwt.verify(token, "jwt-key-XyMa@2k25");
     res.status(200).json({ valid: true, user });
   } catch (err) {
-    console.error("Token validation error:", err);
+    // console.error("Token validation error:", err);
     const status = err.name === "JsonWebTokenError" ? 403 : 500;
     res
       .status(status)
@@ -1196,7 +1198,7 @@ export const deleteXymaClients = async (req, res) => {
   try {
     const { clientId } = req.body;
 
-    console.log("client id", clientId);
+    // console.log("client id", clientId);
 
     const clientDeleted = await xymaClientsModel.findByIdAndDelete(clientId);
 
@@ -1205,6 +1207,105 @@ export const deleteXymaClients = async (req, res) => {
     }
 
     res.status(200).json({ message: "Client deleted successfully." });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+const algorithm = "aes-256-cbc";
+const key = Buffer.from(
+  "bfe9c134b8f67e5c3db4e70e8cfec1a68d5d1bfc9e1a983283fb30827e51731f",
+  "hex"
+);
+const iv = crypto.randomBytes(16);
+
+// Encrypt the password
+export const encryptPassword = (password) => {
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
+  let encrypted = cipher.update(password, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return { encryptedPassword: encrypted, iv: iv.toString("hex") };
+};
+
+// Decrypt the password
+export const decryptPassword = (encryptedPassword, iv) => {
+  const decipher = crypto.createDecipheriv(
+    algorithm,
+    key,
+    Buffer.from(iv, "hex")
+  );
+  let decrypted = decipher.update(encryptedPassword, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+};
+
+export const addXymaCredentials = async (req, res) => {
+  try {
+    const {
+      credentialsClientName,
+      credentialsProjectName,
+      credentialsEmail,
+      credentialsPassword,
+    } = req.body;
+
+    const { encryptedPassword, iv } = encryptPassword(credentialsPassword);
+
+    const xymaCredentials = {
+      ClientName: credentialsClientName,
+      ProjectName: credentialsProjectName,
+      Email: credentialsEmail,
+      Password: encryptedPassword,
+      Iv: iv,
+    };
+
+    await credentialsModel.create(xymaCredentials);
+
+    res.status(200).send("Client credentials added succesfully!");
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+export const getXymaCredentials = async (req, res) => {
+  try {
+    const credentials = await credentialsModel.find().sort({ _id: -1 });
+
+    if (credentials.length > 0) {
+      const decryptedCredentials = credentials.map((credential) => ({
+        ...credential._doc,
+        Password: decryptPassword(credential.Password, credential.Iv),
+      }));
+
+      res.status(200).json({ success: true, data: decryptedCredentials });
+    } else if (!credentials.length) {
+      res.status(200).json({ success: false, data: [] });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error catched!", error: error.message });
+  }
+};
+
+export const deleteXymaCredentials = async (req, res) => {
+  try {
+    const { credentialId } = req.body;
+
+    // console.log("client id", clientId);
+
+    const credentialDeleted = await credentialsModel.findByIdAndDelete(
+      credentialId
+    );
+
+    if (!credentialDeleted) {
+      return res.status(404).json({ message: "Credential not found." });
+    }
+
+    res.status(200).json({ message: "Credential deleted successfully." });
   } catch (error) {
     res
       .status(500)
